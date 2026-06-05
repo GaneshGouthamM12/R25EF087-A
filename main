@@ -99,6 +99,7 @@ void drawRectangle(int x, int y, int width, int height) {
     drawLine(x, y + height, x + width, y + height);
 }
 
+/* Draw Circle */
 void drawCircle(int xc, int yc, int r) {
     int angle;
     for(angle = 0; angle < 360; angle++) {
@@ -117,7 +118,7 @@ void drawTriangle(int x1, int y1,
     drawLine(x3, y3, x1, y1);
 }
 
-void redrawCanvas() {
+oid redrawCanvas() {
     int i;
 
     clearCanvas();
@@ -195,18 +196,18 @@ int main() {
     s.p[2] = 5;
     addObject(s);
 
-    s.type = TRIANGLE;
+s.type = TRIANGLE;
     s.p[0] = 40; s.p[1] = 15;
     s.p[2] = 50; s.p[3] = 20;
     s.p[4] = 30; s.p[5] = 20;
     addObject(s);
 
-    printf("Initial Picture:\n\n");
+printf("Initial Picture:\n\n");
     displayCanvas();
 
-    deleteObject(2);
+deleteObject(2);
 
-    s.type = RECTANGLE;
+s.type = RECTANGLE;
     s.p[0] = 22;
     s.p[1] = 2;
     s.p[2] = 20;
