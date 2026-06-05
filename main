@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#4
+
 #define ROWS 25
 #define COLS 60
 #define MAX_OBJECTS 50
+#define PI 3.141592653589793
 
 char canvas[ROWS][COLS];
 
@@ -23,7 +24,6 @@ typedef struct {
 Shape objects[MAX_OBJECTS];
 int objectCount = 0;
 
-/* Function Prototypes */
 void clearCanvas();
 void displayCanvas();
 void plot(int x, int y);
@@ -37,7 +37,6 @@ void addObject(Shape s);
 void deleteObject(int index);
 void modifyObject(int index, Shape s);
 
-/* Clear Canvas */
 void clearCanvas() {
     int i, j;
     for(i = 0; i < ROWS; i++) {
@@ -47,7 +46,6 @@ void clearCanvas() {
     }
 }
 
-/* Display Canvas */
 void displayCanvas() {
     int i, j;
     for(i = 0; i < ROWS; i++) {
@@ -56,15 +54,15 @@ void displayCanvas() {
         }
         printf("\n");
     }
+    fflush(stdout);
 }
 
-/* Plot a Point */
 void plot(int x, int y) {
-    if(x >= 0 && x < COLS && y >= 0 && y < ROWS)
+    if(x >= 0 && x < COLS && y >= 0 && y < ROWS) {
         canvas[y][x] = '*';
+    }
 }
 
-/* Draw Line (Bresenham Algorithm) */
 void drawLine(int x1, int y1, int x2, int y2) {
     int dx = abs(x2 - x1);
     int dy = abs(y2 - y1);
@@ -94,7 +92,6 @@ void drawLine(int x1, int y1, int x2, int y2) {
     }
 }
 
-/* Draw Rectangle */
 void drawRectangle(int x, int y, int width, int height) {
     drawLine(x, y, x + width, y);
     drawLine(x, y, x, y + height);
@@ -102,18 +99,16 @@ void drawRectangle(int x, int y, int width, int height) {
     drawLine(x, y + height, x + width, y + height);
 }
 
-/* Draw Circle */
 void drawCircle(int xc, int yc, int r) {
     int angle;
     for(angle = 0; angle < 360; angle++) {
-        double rad = angle * 3.14159 / 180.0;
+        double rad = angle * PI / 180.0;
         int x = xc + (int)(r * cos(rad));
         int y = yc + (int)(r * sin(rad));
         plot(x, y);
     }
 }
 
-/* Draw Triangle */
 void drawTriangle(int x1, int y1,
                   int x2, int y2,
                   int x3, int y3) {
@@ -122,31 +117,25 @@ void drawTriangle(int x1, int y1,
     drawLine(x3, y3, x1, y1);
 }
 
-/* Redraw Entire Canvas */
 void redrawCanvas() {
     int i;
 
     clearCanvas();
 
     for(i = 0; i < objectCount; i++) {
-
         switch(objects[i].type) {
-
         case LINE:
             drawLine(objects[i].p[0], objects[i].p[1],
                      objects[i].p[2], objects[i].p[3]);
             break;
-
         case RECTANGLE:
             drawRectangle(objects[i].p[0], objects[i].p[1],
                           objects[i].p[2], objects[i].p[3]);
             break;
-
         case CIRCLE:
             drawCircle(objects[i].p[0], objects[i].p[1],
                        objects[i].p[2]);
             break;
-
         case TRIANGLE:
             drawTriangle(objects[i].p[0], objects[i].p[1],
                          objects[i].p[2], objects[i].p[3],
@@ -156,7 +145,6 @@ void redrawCanvas() {
     }
 }
 
-/* Add Object */
 void addObject(Shape s) {
     if(objectCount < MAX_OBJECTS) {
         objects[objectCount++] = s;
@@ -164,7 +152,6 @@ void addObject(Shape s) {
     }
 }
 
-/* Delete Object */
 void deleteObject(int index) {
     int i;
 
@@ -179,7 +166,6 @@ void deleteObject(int index) {
     redrawCanvas();
 }
 
-/* Modify Object */
 void modifyObject(int index, Shape s) {
     if(index < 0 || index >= objectCount)
         return;
@@ -188,33 +174,27 @@ void modifyObject(int index, Shape s) {
     redrawCanvas();
 }
 
-/* Main Function */
 int main() {
-
     Shape s;
 
     clearCanvas();
 
-    /* Add Line */
     s.type = LINE;
     s.p[0] = 2;  s.p[1] = 2;
     s.p[2] = 20; s.p[3] = 10;
     addObject(s);
 
-    /* Add Rectangle */
     s.type = RECTANGLE;
     s.p[0] = 25; s.p[1] = 3;
     s.p[2] = 15; s.p[3] = 8;
     addObject(s);
 
-    /* Add Circle */
     s.type = CIRCLE;
     s.p[0] = 15;
     s.p[1] = 18;
     s.p[2] = 5;
     addObject(s);
 
-    /* Add Triangle */
     s.type = TRIANGLE;
     s.p[0] = 40; s.p[1] = 15;
     s.p[2] = 50; s.p[3] = 20;
@@ -224,16 +204,13 @@ int main() {
     printf("Initial Picture:\n\n");
     displayCanvas();
 
-    /* Delete Circle (Object 2) */
     deleteObject(2);
 
-    /* Modify Rectangle */
     s.type = RECTANGLE;
     s.p[0] = 22;
     s.p[1] = 2;
     s.p[2] = 20;
     s.p[3] = 10;
-
     modifyObject(1, s);
 
     printf("\nAfter Delete and Modify:\n\n");
