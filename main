@@ -7,158 +7,126 @@
 #define MAX_OBJECTS 100
 
 char canvas[HEIGHT][WIDTH];
-
-typedef enum { LINE=1, RECT, CIRCLE, TRIANGLE } ShapeType;
+typedef enum { LINE = 1, RECT, CIRCLE, TRIANGLE } ShapeType;
 
 typedef struct {
     ShapeType type;
     union {
-        struct { int x1,y1,x2,y2; } line, rect;
-        struct { int cx,cy,r; } circle;
-        struct { int x1,y1,x2,y2,x3,y3; } triangle;
+        int coords[6]; // Flattened mapping: line/rect: [x1,y1,x2,y2], circle: [cx,cy,r], triangle: [x1,y1,x2,y2,x3,y3]
     } data;
 } GraphicObject;
 
 GraphicObject objects[MAX_OBJECTS];
-int object_count=0;
+int object_count = 0;
 
-void clear_canvas(){ memset(canvas,'_',sizeof(canvas)); }
-void plot(int x,int y){ if(x>=0&&x<WIDTH&&y>=0&&y<HEIGHT) canvas[y][x]='*'; }
+void clear_canvas() { memset(canvas, '_', sizeof(canvas)); }
+void plot(int x, int y) { if (x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT) canvas[y][x] = '*'; }
 
-void draw_line(int x0,int y0,int x1,int y1){
-    int dx=abs(x1-x0), sx=x0<x1?1:-1;
-    int dy=-abs(y1-y0), sy=y0<y1?1:-1;
-    int err=dx+dy, e2;
-    while(1){
-        plot(x0,y0);
-        if(x0==x1&&y0==y1) break;
-        e2=2*err;
-        if(e2>=dy){ err+=dy; x0+=sx; }
-        if(e2<=dx){ err+=dx; y0+=sy; }
+void draw_line(int x0, int y0, int x1, int y1) {
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+    while (1) {
+        plot(x0, y0);
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
     }
 }
 
-void draw_rectangle(int x1,int y1,int x2,int y2){
-    int minx=x1<x2?x1:x2, maxx=x1>x2?x1:x2;
-    int miny=y1<y2?y1:y2, maxy=y1>y2?y1:y2;
-    for(int x=minx;x<=maxx;x++){ plot(x,miny); plot(x,maxy); }
-    for(int y=miny;y<=maxy;y++){ plot(minx,y); plot(maxx,y); }
+void draw_rectangle(int x1, int y1, int x2, int y2) {
+    int minx = x1 < x2 ? x1 : x2, maxx = x1 > x2 ? x1 : x2;
+    int miny = y1 < y2 ? y1 : y2, maxy = y1 > y2 ? y1 : y2;
+    for (int x = minx; x <= maxx; x++) { plot(x, miny); plot(x, maxy); }
+    for (int y = miny; y <= maxy; y++) { plot(minx, y); plot(maxx, y); }
 }
 
-void draw_circle_points(int xc,int yc,int x,int y){
-    plot(xc+x,yc+y); plot(xc-x,yc+y);
-    plot(xc+x,yc-y); plot(xc-x,yc-y);
-    plot(xc+y,yc+x); plot(xc-y,yc+x);
-    plot(xc+y,yc-x); plot(xc-y,yc-x);
-}
-
-void draw_circle(int xc,int yc,int r){
-    int x=0,y=r,d=3-2*r;
-    while(y>=x){
-        draw_circle_points(xc,yc,x,y);
+void draw_circle(int xc, int yc, int r) {
+    int x = 0, y = r, d = 3 - 2 * r;
+    while (y >= x) {
+        int offsets[8][2] = {{x,y}, {-x,y}, {x,-y}, {-x,-y}, {y,x}, {-y,x}, {y,-x}, {-y,-x}};
+        for (int i = 0; i < 8; i++) plot(xc + offsets[i][0], yc + offsets[i][1]);
         x++;
-        if(d>0){ y--; d+=4*(x-y)+10; }
-        else d+=4*x+6;
+        if (d > 0) { y--; d += 4 * (x - y) + 10; }
+        else d += 4 * x + 6;
     }
 }
 
-void draw_triangle(int x1,int y1,int x2,int y2,int x3,int y3){
-    draw_line(x1,y1,x2,y2);
-    draw_line(x2,y2,x3,y3);
-    draw_line(x3,y3,x1,y1);
-}
-
-void render_all(){
+void render_all() {
     clear_canvas();
-    for(int i=0;i<object_count;i++){
-        GraphicObject o=objects[i];
-        if(o.type==LINE) draw_line(o.data.line.x1,o.data.line.y1,o.data.line.x2,o.data.line.y2);
-        else if(o.type==RECT) draw_rectangle(o.data.rect.x1,o.data.rect.y1,o.data.rect.x2,o.data.rect.y2);
-        else if(o.type==CIRCLE) draw_circle(o.data.circle.cx,o.data.circle.cy,o.data.circle.r);
-        else if(o.type==TRIANGLE) draw_triangle(o.data.triangle.x1,o.data.triangle.y1,
-                                                o.data.triangle.x2,o.data.triangle.y2,
-                                                o.data.triangle.x3,o.data.triangle.y3);
+    for (int i = 0; i < object_count; i++) {
+        int *d = objects[i].data.coords;
+        switch (objects[i].type) {
+            case LINE:     draw_line(d[0], d[1], d[2], d[3]); break;
+            case RECT:     draw_rectangle(d[0], d[1], d[2], d[3]); break;
+            case CIRCLE:   draw_circle(d[0], d[1], d[2]); break;
+            case TRIANGLE: draw_line(d[0], d[1], d[2], d[3]);
+                           draw_line(d[2], d[3], d[4], d[5]);
+                           draw_line(d[4], d[5], d[0], d[1]); break;
+        }
     }
 }
 
-void display_canvas(){
-    for(int c=0;c<WIDTH+2;c++) putchar('-'); putchar('\n');
-    for(int r=0;r<HEIGHT;r++){
-        putchar('|');
-        for(int c=0;c<WIDTH;c++) putchar(canvas[r][c]);
-        puts("|");
+void display_canvas() {
+    for (int i = 0; i < 2; i++, putchar('\n')) for (int c = 0; c < WIDTH + 2; c++) putchar('-');
+    for (int r = 0; r < HEIGHT; r++) {
+        printf("|%.*s|\n", WIDTH, canvas[r]);
     }
-    for(int c=0;c<WIDTH+2;c++) putchar('-'); putchar('\n');
+    for (int c = 0; c < WIDTH + 2; c++) putchar('-'); putchar('\n');
 }
 
-void clear_input_buffer(){ int c; while((c=getchar())!='\n'&&c!=EOF); }
-int get_valid_int(const char*prompt,int min,int max){
-    int v; while(1){
-        printf("%s",prompt);
-        if(scanf("%d",&v)==1 && v>=min && v<=max){ clear_input_buffer(); return v; }
-        printf("Invalid input.\n"); clear_input_buffer();
-    }
-}
-
-void input_object_data(GraphicObject*o,const char*prefix){
-    if(o->type==LINE){
-        o->data.line.x1=get_valid_int("x1: ",0,WIDTH-1);
-        o->data.line.y1=get_valid_int("y1: ",0,HEIGHT-1);
-        o->data.line.x2=get_valid_int("x2: ",0,WIDTH-1);
-        o->data.line.y2=get_valid_int("y2: ",0,HEIGHT-1);
-    } else if(o->type==RECT){
-        o->data.rect.x1=get_valid_int("corner1 x: ",0,WIDTH-1);
-        o->data.rect.y1=get_valid_int("corner1 y: ",0,HEIGHT-1);
-        o->data.rect.x2=get_valid_int("corner2 x: ",0,WIDTH-1);
-        o->data.rect.y2=get_valid_int("corner2 y: ",0,HEIGHT-1);
-    } else if(o->type==CIRCLE){
-        o->data.circle.cx=get_valid_int("center x: ",0,WIDTH-1);
-        o->data.circle.cy=get_valid_int("center y: ",0,HEIGHT-1);
-        o->data.circle.r=get_valid_int("radius: ",0,100);
-    } else {
-        o->data.triangle.x1=get_valid_int("v1 x: ",0,WIDTH-1);
-        o->data.triangle.y1=get_valid_int("v1 y: ",0,HEIGHT-1);
-        o->data.triangle.x2=get_valid_int("v2 x: ",0,WIDTH-1);
-        o->data.triangle.y2=get_valid_int("v2 y: ",0,HEIGHT-1);
-        o->data.triangle.x3=get_valid_int("v3 x: ",0,WIDTH-1);
-        o->data.triangle.y3=get_valid_int("v3 y: ",0,HEIGHT-1);
+int get_valid_int(const char* prompt, int min, int max) {
+    int v, c;
+    while (1) {
+        printf("%s", prompt);
+        if (scanf("%d", &v) == 1 && v >= min && v <= max) {
+            while ((c = getchar()) != '\n' && c != EOF); return v;
+        }
+        printf("Invalid input.\n");
+        while ((c = getchar()) != '\n' && c != EOF);
     }
 }
 
-int select_object(const char*action){
-    if(object_count==0){ printf("No objects to %s.\n",action); return -1; }
-    for(int i=0;i<object_count;i++) printf("[%d] type %d\n",i,objects[i].type);
-    return get_valid_int("Enter index: ",0,object_count-1);
+void input_object_data(GraphicObject* o) {
+    const char* prompts[][6] = {
+        {"x1: ", "y1: ", "x2: ", "y2: "},
+        {"corner1 x: ", "corner1 y: ", "corner2 x: ", "corner2 y: "},
+        {"center x: ", "center y: ", "radius: "},
+        {"v1 x: ", "v1 y: ", "v2 x: ", "v2 y: ", "v3 x: ", "v3 y: "}
+    };
+    int limits[] = {4, 4, 3, 6};
+    int type_idx = o->type - 1;
+    for (int i = 0; i < limits[type_idx]; i++) {
+        int max_val = (o->type == CIRCLE && i == 2) ? 100 : ((i % 2 == 0) ? WIDTH - 1 : HEIGHT - 1);
+        o->data.coords[i] = get_valid_int(prompts[type_idx][i], 0, max_val);
+    }
 }
 
-void add_object(){
-    if(object_count>=MAX_OBJECTS){ puts("Limit reached."); return; }
-    int t=get_valid_int("1.Line 2.Rect 3.Circle 4.Triangle: ",1,4);
-    GraphicObject o; o.type=t; input_object_data(&o,"Enter ");
-    objects[object_count++]=o; render_all(); display_canvas();
+int select_object(const char* action) {
+    if (object_count == 0) { printf("No objects to %s.\n", action); return -1; }
+    for (int i = 0; i < object_count; i++) printf("[%d] type %d\n", i, objects[i].type);
+    return get_valid_int("Enter index: ", 0, object_count - 1);
 }
 
-void delete_object(){
-    int idx=select_object("delete"); if(idx<0) return;
-    for(int i=idx;i<object_count-1;i++) objects[i]=objects[i+1];
-    object_count--; render_all(); display_canvas();
-}
+void update_and_show() { render_all(); display_canvas(); }
 
-void modify_object(){
-    int idx=select_object("modify"); if(idx<0) return;
-    input_object_data(&objects[idx],"Enter new "); render_all(); display_canvas();
-}
-
-int main(){
+int main() {
     clear_canvas();
-    while(1){
+    while (1) {
         printf("\n1.Add 2.Delete 3.Modify 4.Display 5.Clear 6.Exit\n");
-        int ch=get_valid_int("Choice: ",1,6);
-        if(ch==1) add_object();
-        else if(ch==2) delete_object();
-        else if(ch==3) modify_object();
-        else if(ch==4){ render_all(); display_canvas(); }
-        else if(ch==5){ object_count=0; render_all(); display_canvas(); }
-        else return 0;
+        int ch = get_valid_int("Choice: ", 1, 6), idx;
+        if (ch == 1 && object_count < MAX_OBJECTS) {
+            objects[object_count].type = get_valid_int("1.Line 2.Rect 3.Circle 4.Triangle: ", 1, 4);
+            input_object_data(&objects[object_count++]);
+        } else if (ch == 1) puts("Limit reached.");
+        else if (ch == 2 && (idx = select_object("delete")) >= 0) {
+            for (int i = idx; i < object_count - 1; i++) objects[i] = objects[i + 1];
+            object_count--;
+        } else if (ch == 3 && (idx = select_object("modify")) >= 0) {
+            input_object_data(&objects[idx]);
+        } else if (ch == 5) object_count = 0;
+        else if (ch == 6) return 0;
+        update_and_show();
     }
 }
