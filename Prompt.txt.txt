@@ -1,0 +1,1002 @@
+Prompt 1.
+Write a 2d graphics editor using * and  _.
+
+Write functions to draw a circle, rectangle, line, and triangle.
+You should be able to
+      add objects to the picture,
+      delete objects from the picture, and
+       modify objects in the picture.
+Use a 2d array of characters to store the picture.
+Write a function to display the picture.
+
+write the code for this question using c programming.
+
+Response:
+Write a 2d graphics editor using * and  _.
+
+Write functions to draw a circle, rectangle, line, and triangle.
+You should be able to
+      add objects to the picture,
+      delete objects from the picture, and
+       modify objects in the picture.
+Use a 2d array of characters to store the picture.
+Write a function to display the picture.
+
+write the code for this question using c programming.
+
+
+Program:
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+#define ROWS 25
+#define COLS 60
+#define MAX_OBJECTS 50
+
+char canvas[ROWS][COLS];
+
+typedef enum {
+    LINE,
+    RECTANGLE,
+    CIRCLE,
+    TRIANGLE
+} ShapeType;
+
+typedef struct {
+    ShapeType type;
+    int p[6];
+} Shape;
+
+Shape objects[MAX_OBJECTS];
+int objectCount = 0;
+
+/* Function Prototypes */
+void clearCanvas();
+void displayCanvas();
+void plot(int x, int y);
+void drawLine(int x1, int y1, int x2, int y2);
+void drawRectangle(int x, int y, int width, int height);
+void drawCircle(int xc, int yc, int r);
+void drawTriangle(int x1, int y1, int x2, int y2, int x3, int y3);
+void redrawCanvas();
+
+void addObject(Shape s);
+void deleteObject(int index);
+void modifyObject(int index, Shape s);
+
+/* Clear Canvas */
+void clearCanvas() {
+    int i, j;
+    for(i = 0; i < ROWS; i++) {
+        for(j = 0; j < COLS; j++) {
+            canvas[i][j] = '_';
+        }
+    }
+}
+
+/* Display Canvas */
+void displayCanvas() {
+    int i, j;
+    for(i = 0; i < ROWS; i++) {
+        for(j = 0; j < COLS; j++) {
+            printf("%c", canvas[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+/* Plot a Point */
+void plot(int x, int y) {
+    if(x >= 0 && x < COLS && y >= 0 && y < ROWS)
+        canvas[y][x] = '*';
+}
+
+/* Draw Line (Bresenham Algorithm) */
+void drawLine(int x1, int y1, int x2, int y2) {
+    int dx = abs(x2 - x1);
+    int dy = abs(y2 - y1);
+
+    int sx = (x1 < x2) ? 1 : -1;
+    int sy = (y1 < y2) ? 1 : -1;
+
+    int err = dx - dy;
+
+    while(1) {
+        plot(x1, y1);
+
+        if(x1 == x2 && y1 == y2)
+            break;
+
+        int e2 = 2 * err;
+
+        if(e2 > -dy) {
+            err -= dy;
+            x1 += sx;
+        }
+
+        if(e2 < dx) {
+            err += dx;
+            y1 += sy;
+        }
+    }
+}
+
+/* Draw Rectangle */
+void drawRectangle(int x, int y, int width, int height) {
+    drawLine(x, y, x + width, y);
+    drawLine(x, y, x, y + height);
+    drawLine(x + width, y, x + width, y + height);
+    drawLine(x, y + height, x + width, y + height);
+}
+
+/* Draw Circle */
+void drawCircle(int xc, int yc, int r) {
+    int angle;
+    for(angle = 0; angle < 360; angle++) {
+        double rad = angle * 3.14159 / 180.0;
+        int x = xc + (int)(r * cos(rad));
+        int y = yc + (int)(r * sin(rad));
+        plot(x, y);
+    }
+}
+
+/* Draw Triangle */
+void drawTriangle(int x1, int y1,
+                  int x2, int y2,
+                  int x3, int y3) {
+    drawLine(x1, y1, x2, y2);
+    drawLine(x2, y2, x3, y3);
+    drawLine(x3, y3, x1, y1);
+}
+
+/* Redraw Entire Canvas */
+void redrawCanvas() {
+    int i;
+
+    clearCanvas();
+
+    for(i = 0; i < objectCount; i++) {
+
+        switch(objects[i].type) {
+
+        case LINE:
+            drawLine(objects[i].p[0], objects[i].p[1],
+                     objects[i].p[2], objects[i].p[3]);
+            break;
+
+        case RECTANGLE:
+            drawRectangle(objects[i].p[0], objects[i].p[1],
+                          objects[i].p[2], objects[i].p[3]);
+            break;
+
+        case CIRCLE:
+            drawCircle(objects[i].p[0], objects[i].p[1],
+                       objects[i].p[2]);
+            break;
+
+        case TRIANGLE:
+            drawTriangle(objects[i].p[0], objects[i].p[1],
+                         objects[i].p[2], objects[i].p[3],
+                         objects[i].p[4], objects[i].p[5]);
+            break;
+        }
+    }
+}
+
+/* Add Object */
+void addObject(Shape s) {
+    if(objectCount < MAX_OBJECTS) {
+        objects[objectCount++] = s;
+        redrawCanvas();
+    }
+}
+
+/* Delete Object */
+void deleteObject(int index) {
+    int i;
+
+    if(index < 0 || index >= objectCount)
+        return;
+
+    for(i = index; i < objectCount - 1; i++) {
+        objects[i] = objects[i + 1];
+    }
+
+    objectCount--;
+    redrawCanvas();
+}
+
+/* Modify Object */
+void modifyObject(int index, Shape s) {
+    if(index < 0 || index >= objectCount)
+        return;
+
+    objects[index] = s;
+    redrawCanvas();
+}
+
+/* Main Function */
+int main() {
+
+    Shape s;
+
+    clearCanvas();
+
+    /* Add Line */
+    s.type = LINE;
+    s.p[0] = 2;  s.p[1] = 2;
+    s.p[2] = 20; s.p[3] = 10;
+    addObject(s);
+
+    /* Add Rectangle */
+    s.type = RECTANGLE;
+    s.p[0] = 25; s.p[1] = 3;
+    s.p[2] = 15; s.p[3] = 8;
+    addObject(s);
+
+    /* Add Circle */
+    s.type = CIRCLE;
+    s.p[0] = 15;
+    s.p[1] = 18;
+    s.p[2] = 5;
+    addObject(s);
+
+    /* Add Triangle */
+    s.type = TRIANGLE;
+    s.p[0] = 40; s.p[1] = 15;
+    s.p[2] = 50; s.p[3] = 20;
+    s.p[4] = 30; s.p[5] = 20;
+    addObject(s);
+
+    printf("Initial Picture:\n\n");
+    displayCanvas();
+
+    /* Delete Circle (Object 2) */
+    deleteObject(2);
+
+    /* Modify Rectangle */
+    s.type = RECTANGLE;
+    s.p[0] = 22;
+    s.p[1] = 2;
+    s.p[2] = 20;
+    s.p[3] = 10;
+
+    modifyObject(1, s);
+
+    printf("\nAfter Delete and Modify:\n\n");
+    displayCanvas();
+
+    return 0;
+}
+
+Prompt2.
+**Rectangle Area Management Using Structures**
+
+Write a C program to manage information about multiple rectangles using structures.
+
+Define a structure named `Rectangle` with the following members:
+
+* `length`
+* `width`
+* `area`
+
+The program should:
+
+1. Read the number of rectangles from the user.
+2. Input the length and width of each rectangle.
+3. Calculate the area of each rectangle using a separate function.
+4. Find the rectangle with the largest area using a separate function.
+5. Display the area of every rectangle.
+6. Display the length, width, and area of the rectangle having the largest area.
+
+Implement the following functions:
+
+* `input()` – to read the dimensions of all rectangles.
+* `calculate_area()` – to compute the area of each rectangle.
+* `findLargestArea()` – to determine the rectangle with the maximum area.
+* `output()` – to display all rectangle areas and the rectangle with the largest area.
+
+Use an array of structures to store the rectangle details.
+
+Response:
+
+Program:
+#include <stdio.h>
+
+typedef struct {
+    int length;
+    int width;
+    int area;
+} Rectangle;
+
+// Function Prototypes
+void input(int n, Rectangle rects[n]);
+void calculate_area(int n, Rectangle rects[n]);
+int findLargestArea(int n, Rectangle rects[n]);
+void output(int n, int largestIndex, Rectangle rects[n]);
+
+int main() {
+
+    int n;
+
+    printf("Enter number of rectangles:\n");
+    scanf("%d", &n);
+
+    Rectangle rects[n];
+
+    input(n, rects);
+    calculate_area(n, rects);
+    int largestIndex = findLargestArea(n, rects);
+    output(n, largestIndex, rects);
+
+    return 0;
+}
+
+void input(int n, Rectangle rects[n]) {
+    for (int i = 0; i < n; i++) {
+        printf("Enter length and width of rectangle %d:\n", i + 1);
+        scanf("%d %d", &rects[i].length, &rects[i].width);
+    }
+}
+
+void calculate_area(int n, Rectangle rects[n]) {
+    for (int i = 0; i < n; i++) {
+        rects[i].area = rects[i].length * rects[i].width;
+    }
+}
+
+int findLargestArea(int n, Rectangle rects[n]) {
+    int maxIndex = 0;
+
+    for (int i = 1; i < n; i++) {
+        if (rects[i].area > rects[maxIndex].area) {
+            maxIndex = i;
+        }
+    }
+
+    return maxIndex;
+}
+
+void output(int n, int largestIndex, Rectangle rects[n]) {
+    printf("\nAreas of all rectangles:\n");
+
+    for (int i = 0; i < n; i++) {
+        printf("Rectangle %d area = %d\n", i + 1, rects[i].area);
+    }
+
+    printf("\nRectangle with Largest Area:\n");
+    printf("Length = %d, Width = %d, Area = %d\n",
+           rects[largestIndex].length,
+           rects[largestIndex].width,
+           rects[largestIndex].area);
+}
+
+Prompt3.
+**Rectangle Area Management Using Structures and Functions**
+
+Write a C program to manage information about multiple rectangles using a structure.
+
+Define a structure named `Rectangle` containing the following members:
+
+* `length`
+* `width`
+* `area`
+
+The program should:
+
+1. Read the number of rectangles from the user.
+2. Input the length and width of each rectangle.
+3. Calculate the area of every rectangle using a separate function.
+4. Display the area of each rectangle.
+5. Determine the rectangle with the largest area using a separate function.
+6. Display the rectangle number and its area that has the maximum area.
+
+Requirements:
+
+* Use a structure to store rectangle details.
+* Use separate functions for:
+
+  * Inputting rectangle data
+  * Calculating areas
+  * Finding the rectangle with the maximum area
+  * Displaying all areas
+  * Displaying the rectangle with the largest area
+* Validate the number of rectangles entered. If the number is less than or equal to zero, display an appropriate error message and terminate the program.
+
+**Sample Input**
+
+```
+Enter number of rectangles: 3
+Enter length of rectangle 1: 5
+Enter width of rectangle 1: 4
+Enter length of rectangle 2: 8
+Enter width of rectangle 2: 3
+Enter length of rectangle 3: 6
+Enter width of rectangle 3: 7
+```
+
+**Sample Output**
+
+```
+Areas of rectangles:
+Rectangle 1 area = 20
+Rectangle 2 area = 24
+Rectangle 3 area = 42
+
+Rectangle 3 has the largest area = 42
+```
+
+Response:
+
+Program:
+#include <stdio.h>
+
+/* Structure Definition */
+typedef struct { 
+     int length; 
+     int width; 
+     int area; 
+} Rectangle; 
+
+/* Function Prototypes */
+void input_rectangles(int n, Rectangle rects[n]);
+void calculate_areas(int n, Rectangle rects[n]);
+int find_max_index(int n, Rectangle rects[n]);
+void display_areas(int n, Rectangle rects[n]);
+void display_max(Rectangle rects[], int max_index);
+
+int main()
+{
+    int n;
+    
+    printf("Enter number of rectangles: ");
+    scanf("%d",&n);
+    Rectangle rects[n];
+    
+    if(n<=0)
+    {
+        printf("Invalid number of rectangles\n");
+        return 0;
+    }
+    input_rectangles(n,rects);
+    calculate_areas(n,rects);
+    display_areas(n,rects);
+    int max_index = find_max_index(n,rects);
+    display_max(rects,max_index);
+    return 0;
+}
+
+/* Function to input rectangle details */
+void input_rectangles(int n, Rectangle rects[n])
+{
+   for(int i=0; i<n; i++)
+   {
+        printf("Enter length of rectangle %d: ",i+1 );
+        scanf("%d",&rects[i].length);
+        printf("Enter width of rectangle %d: ",i+1 );
+        scanf("%d",&rects[i].width);
+   }    
+}
+
+/* Function to calculate areas */
+void calculate_areas(int n, Rectangle rects[n])
+{
+    for(int i=0;i<n;i++)
+    {
+        rects[i].area = rects[i].length * rects[i].width;
+    }
+}
+
+/* Function to display all areas */
+void display_areas(int n, Rectangle rects[n])
+{
+    printf("\nAreas of rectangles:\n");
+    for(int i=0;i<n;i++)
+    {
+        printf("Rectangle %d area = %d\n", i+1, rects[i].area);
+    }
+}
+
+/* Function to find index of rectangle with maximum area */
+int find_max_index(int n, Rectangle rects[n])
+{
+    int max_index = 0;
+    for(int i=1;i<n;i++)
+    {
+        if(rects[i].area > rects[max_index].area)
+        {
+            max_index = i;
+        }
+    }
+    return max_index;
+}
+
+/* Function to display rectangle with maximum area */
+void display_max(Rectangle rects[], int max_index)
+{
+    printf("\nRectangle %d has the largest area = %d\n", max_index+1, rects[max_index].area);
+}
+
+
+Prompt4:
+**Rectangle Area Calculator Using Structures**
+
+Write a C program that uses a structure to store the dimensions of multiple rectangles. The structure should contain the length, width, and area of a rectangle.
+
+The program should:
+
+1. Read the number of rectangles from the user.
+2. Input the length and width of each rectangle.
+3. Calculate the area of each rectangle and store it in the structure.
+4. Display the area of all rectangles.
+5. Find the rectangle with the largest area.
+6. Display the rectangle number and its maximum area.
+
+Requirements:
+
+* Use a structure named `Rectangle` with members `length`, `width`, and `area`.
+* Use separate functions for:
+
+  * Inputting rectangle details
+  * Calculating areas
+  * Displaying all areas
+  * Finding the rectangle with the maximum area
+  * Displaying the rectangle with the largest area
+* Validate the number of rectangles entered. If the number is less than or equal to zero, display an error message and terminate the program.
+
+**Sample Input**
+
+```
+Enter number of rectangles: 3
+Enter length of rectangle 1: 5
+Enter width of rectangle 1: 4
+Enter length of rectangle 2: 8
+Enter width of rectangle 2: 3
+Enter length of rectangle 3: 6
+Enter width of rectangle 3: 7
+```
+
+**Sample Output**
+
+```
+Areas of rectangles:
+Rectangle 1 area = 20
+Rectangle 2 area = 24
+Rectangle 3 area = 42
+
+Rectangle 3 has the largest area = 42
+```
+
+Response:
+
+Program:
+#include <stdio.h>
+
+/* Structure Definition */
+typedef struct { 
+     int length; 
+     int width; 
+     int area; 
+} Rectangle; 
+
+/* Function Prototypes */
+void input_rectangles(int n, Rectangle rects[n]);
+void calculate_areas(int n, Rectangle rects[n]);
+int find_max_index(int n, Rectangle rects[n]);
+void display_areas(int n, Rectangle rects[n]);
+void display_max(Rectangle rects[], int max_index);
+
+int main()
+{
+    int n;
+    
+    printf("Enter number of rectangles: ");
+    scanf("%d",&n);
+    Rectangle rects[n];
+    
+    if(n<=0)
+    {
+        printf("Invalid number of rectangles\n");
+        return 0;
+    }
+    input_rectangles(n,rects);
+    calculate_areas(n,rects);
+    display_areas(n,rects);
+    int max_index = find_max_index(n,rects);
+    display_max(rects,max_index);
+    return 0;
+}
+
+/* Function to input rectangle details */
+void input_rectangles(int n, Rectangle rects[n])
+{
+   for(int i=0; i<n; i++)
+   {
+        printf("Enter length of rectangle %d: ",i+1 );
+        scanf("%d",&rects[i].length);
+        printf("Enter width of rectangle %d: ",i+1 );
+        scanf("%d",&rects[i].width);
+   }    
+}
+
+/* Function to calculate areas */
+void calculate_areas(int n, Rectangle rects[n])
+{
+    for(int i=0;i<n;i++)
+    {
+        rects[i].area = rects[i].length * rects[i].width;
+    }
+}
+
+/* Function to display all areas */
+void display_areas(int n, Rectangle rects[n])
+{
+    printf("\nAreas of rectangles:\n");
+    for(int i=0;i<n;i++)
+    {
+        printf("Rectangle %d area = %d\n", i+1, rects[i].area);
+    }
+}
+
+/* Function to find index of rectangle with maximum area */
+int find_max_index(int n, Rectangle rects[n])
+{
+    int max_index = 0;
+    for(int i=1;i<n;i++)
+    {
+        if(rects[i].area > rects[max_index].area)
+        {
+            max_index = i;
+        }
+    }
+    return max_index;
+}
+
+/* Function to display rectangle with maximum area */
+void display_max(Rectangle rects[], int max_index)
+{
+    printf("\nRectangle %d has the largest area = %d\n",
+           max_index+1, rects[max_index].area);
+}
+
+Prompt5:
+**Problem Statement:**
+
+Write a C program to manage information about multiple rectangles using structures and functions.
+
+Define a structure named `Rectangle` with the following members:
+
+* `length` – length of the rectangle
+* `width` – width of the rectangle
+* `area` – area of the rectangle
+
+The program should:
+
+1. Accept the number of rectangles from the user.
+2. Input the length and width of each rectangle.
+3. Calculate and store the area of each rectangle.
+4. Display the area of all rectangles.
+5. Determine the rectangle having the largest area.
+6. Display the rectangle number and its corresponding maximum area.
+
+**Requirements:**
+
+* Use a structure to store rectangle details.
+* Use separate functions for:
+
+  * Reading rectangle dimensions
+  * Calculating areas
+  * Displaying areas
+  * Finding the rectangle with the maximum area
+  * Displaying the rectangle with the largest area
+* Validate the number of rectangles entered. If the number is less than or equal to zero, display `"Invalid number of rectangles"` and terminate the program.
+
+**Sample Input:**
+Number of rectangles = 3
+
+Rectangle 1: Length = 5, Width = 4
+Rectangle 2: Length = 8, Width = 3
+Rectangle 3: Length = 6, Width = 7
+
+**Sample Output:**
+Areas of rectangles:
+
+* Rectangle 1 area = 20
+* Rectangle 2 area = 24
+* Rectangle 3 area = 42
+
+Rectangle 3 has the largest area = 42
+
+Response:
+
+Program:
+#include <stdio.h>
+
+/* Structure Definition */
+typedef struct { 
+     int length; 
+     int width; 
+     int area; 
+} Rectangle; 
+
+/* Function Prototypes */
+void input_rectangles(int n, Rectangle rects[n]);
+void calculate_areas(int n, Rectangle rects[n]);
+int find_max_index(int n, Rectangle rects[n]);
+void display_areas(int n, Rectangle rects[n]);
+void display_max(Rectangle rects[], int max_index);
+
+int main()
+{
+    int n;
+    
+    printf("Enter number of rectangles: ");
+    scanf("%d",&n);
+    Rectangle rects[n];
+    
+    if(n<=0)
+    {
+        printf("Invalid number of rectangles\n");
+        return 0;
+    }
+    input_rectangles(n,rects);
+    calculate_areas(n,rects);
+    display_areas(n,rects);
+    int max_index = find_max_index(n,rects);
+    display_max(rects,max_index);
+    return 0;
+}
+
+/* Function to input rectangle details */
+void input_rectangles(int n, Rectangle rects[n])
+{
+   for(int i=0; i<n; i++)
+   {
+        printf("Enter length of rectangle %d: ",i+1 );
+        scanf("%d",&rects[i].length);
+        printf("Enter width of rectangle %d: ",i+1 );
+        scanf("%d",&rects[i].width);
+   }    
+}
+
+/* Function to calculate areas */
+void calculate_areas(int n, Rectangle rects[n])
+{
+    for(int i=0;i<n;i++)
+    {
+        rects[i].area = rects[i].length * rects[i].width;
+    }
+}
+
+/* Function to display all areas */
+void display_areas(int n, Rectangle rects[n])
+{
+    printf("\nAreas of rectangles:\n");
+    for(int i=0;i<n;i++)
+    {
+        printf("Rectangle %d area = %d\n", i+1, rects[i].area);
+    }
+}
+
+/* Function to find index of rectangle with maximum area */
+int find_max_index(int n, Rectangle rects[n])
+{
+    int max_index = 0;
+    for(int i=1;i<n;i++)
+    {
+        if(rects[i].area > rects[max_index].area)
+        {
+            max_index = i;
+        }
+    }
+    return max_index;
+}
+
+/* Function to display rectangle with maximum area */
+void display_max(Rectangle rects[], int max_index)
+{
+    printf("\nRectangle %d has the largest area = %d\n",
+           max_index+1, rects[max_index].area);
+}
+
+
+Prompt6:
+**2D Graphics Editor Using Character Array**
+
+Write a C program that implements a simple 2D graphics editor using a character-based canvas. The canvas should be represented using a 2D array of characters, where:
+
+* `'*'` represents a drawn pixel.
+* `'_'` represents an empty pixel.
+
+The editor should support the following geometric objects:
+
+1. Line
+2. Rectangle
+3. Circle
+4. Triangle
+
+### Requirements
+
+1. Create a canvas of size **80 × 25** characters.
+2. Store all graphical objects in an array of structures.
+3. Use an enumeration to represent different shape types.
+4. Provide functions to:
+
+   * Draw a line
+   * Draw a rectangle
+   * Draw a circle
+   * Draw a triangle
+   * Display the canvas
+5. Allow the user to perform the following operations through a menu:
+
+   * Add an object to the picture
+   * Delete an existing object
+   * Modify an existing object
+   * Display the current picture
+   * Clear the picture
+   * Exit the program
+6. Whenever an object is added, deleted, or modified:
+
+   * Redraw all objects on the canvas.
+   * Display the updated picture.
+7. Validate all user inputs to ensure coordinates remain within the canvas boundaries.
+8. Support storage of up to **100 graphical objects**.
+
+### Menu
+
+```text
+1. Add Object
+2. Delete Object
+3. Modify Object
+4. Display Picture
+5. Clear Picture
+6. Exit
+```
+
+### Shape Parameters
+
+* **Line:** Starting point (x1, y1) and ending point (x2, y2)
+* **Rectangle:** Two opposite corner coordinates
+* **Circle:** Center coordinates and radius
+* **Triangle:** Three vertex coordinates
+
+### Expected Outcome
+
+The program should function as a simple text-based graphics editor where users can create, edit, remove, and display geometric shapes on a character-based drawing canvas using `*` and `_`.
+
+
+Response:
+Program:
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define WIDTH 80
+#define HEIGHT 25
+#define MAX_OBJECTS 100
+
+char canvas[HEIGHT][WIDTH];
+typedef enum { LINE = 1, RECT, CIRCLE, TRIANGLE } ShapeType;
+
+typedef struct {
+    ShapeType type;
+    union {
+        int coords[6]; // Flattened mapping: line/rect: [x1,y1,x2,y2], circle: [cx,cy,r], triangle: [x1,y1,x2,y2,x3,y3]
+    } data;
+} GraphicObject;
+
+GraphicObject objects[MAX_OBJECTS];
+int object_count = 0;
+
+void clear_canvas() { memset(canvas, '_', sizeof(canvas)); }
+void plot(int x, int y) { if (x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT) canvas[y][x] = '*'; }
+
+void draw_line(int x0, int y0, int x1, int y1) {
+    int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+    while (1) {
+        plot(x0, y0);
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+}
+
+void draw_rectangle(int x1, int y1, int x2, int y2) {
+    int minx = x1 < x2 ? x1 : x2, maxx = x1 > x2 ? x1 : x2;
+    int miny = y1 < y2 ? y1 : y2, maxy = y1 > y2 ? y1 : y2;
+    for (int x = minx; x <= maxx; x++) { plot(x, miny); plot(x, maxy); }
+    for (int y = miny; y <= maxy; y++) { plot(minx, y); plot(maxx, y); }
+}
+
+void draw_circle(int xc, int yc, int r) {
+    int x = 0, y = r, d = 3 - 2 * r;
+    while (y >= x) {
+        int offsets[8][2] = {{x,y}, {-x,y}, {x,-y}, {-x,-y}, {y,x}, {-y,x}, {y,-x}, {-y,-x}};
+        for (int i = 0; i < 8; i++) plot(xc + offsets[i][0], yc + offsets[i][1]);
+        x++;
+        if (d > 0) { y--; d += 4 * (x - y) + 10; }
+        else d += 4 * x + 6;
+    }
+}
+
+void render_all() {
+    clear_canvas();
+    for (int i = 0; i < object_count; i++) {
+        int *d = objects[i].data.coords;
+        switch (objects[i].type) {
+            case LINE:     draw_line(d[0], d[1], d[2], d[3]); break;
+            case RECT:     draw_rectangle(d[0], d[1], d[2], d[3]); break;
+            case CIRCLE:   draw_circle(d[0], d[1], d[2]); break;
+            case TRIANGLE: draw_line(d[0], d[1], d[2], d[3]);
+                           draw_line(d[2], d[3], d[4], d[5]);
+                           draw_line(d[4], d[5], d[0], d[1]); break;
+        }
+    }
+}
+
+void display_canvas() {
+    for (int i = 0; i < 2; i++, putchar('\n')) for (int c = 0; c < WIDTH + 2; c++) putchar('-');
+    for (int r = 0; r < HEIGHT; r++) {
+        printf("|%.*s|\n", WIDTH, canvas[r]);
+    }
+    for (int c = 0; c < WIDTH + 2; c++) putchar('-'); putchar('\n');
+}
+
+int get_valid_int(const char* prompt, int min, int max) {
+    int v, c;
+    while (1) {
+        printf("%s", prompt);
+        if (scanf("%d", &v) == 1 && v >= min && v <= max) {
+            while ((c = getchar()) != '\n' && c != EOF); return v;
+        }
+        printf("Invalid input.\n");
+        while ((c = getchar()) != '\n' && c != EOF);
+    }
+}
+
+void input_object_data(GraphicObject* o) {
+    const char* prompts[][6] = {
+        {"x1: ", "y1: ", "x2: ", "y2: "},
+        {"corner1 x: ", "corner1 y: ", "corner2 x: ", "corner2 y: "},
+        {"center x: ", "center y: ", "radius: "},
+        {"v1 x: ", "v1 y: ", "v2 x: ", "v2 y: ", "v3 x: ", "v3 y: "}
+    };
+    int limits[] = {4, 4, 3, 6};
+    int type_idx = o->type - 1;
+    for (int i = 0; i < limits[type_idx]; i++) {
+        int max_val = (o->type == CIRCLE && i == 2) ? 100 : ((i % 2 == 0) ? WIDTH - 1 : HEIGHT - 1);
+        o->data.coords[i] = get_valid_int(prompts[type_idx][i], 0, max_val);
+    }
+}
+
+int select_object(const char* action) {
+    if (object_count == 0) { printf("No objects to %s.\n", action); return -1; }
+    for (int i = 0; i < object_count; i++) printf("[%d] type %d\n", i, objects[i].type);
+    return get_valid_int("Enter index: ", 0, object_count - 1);
+}
+
+void update_and_show() { render_all(); display_canvas(); }
+
+int main() {
+    clear_canvas();
+    while (1) {
+        printf("\n1.Add 2.Delete 3.Modify 4.Display 5.Clear 6.Exit\n");
+        int ch = get_valid_int("Choice: ", 1, 6), idx;
+        if (ch == 1 && object_count < MAX_OBJECTS) {
+            objects[object_count].type = get_valid_int("1.Line 2.Rect 3.Circle 4.Triangle: ", 1, 4);
+            input_object_data(&objects[object_count++]);
+        } else if (ch == 1) puts("Limit reached.");
+        else if (ch == 2 && (idx = select_object("delete")) >= 0) {
+            for (int i = idx; i < object_count - 1; i++) objects[i] = objects[i + 1];
+            object_count--;
+        } else if (ch == 3 && (idx = select_object("modify")) >= 0) {
+            input_object_data(&objects[idx]);
+        } else if (ch == 5) object_count = 0;
+        else if (ch == 6) return 0;
+        update_and_show();
+    }
+}
